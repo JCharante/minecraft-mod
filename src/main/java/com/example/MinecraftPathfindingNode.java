@@ -45,9 +45,11 @@ public class MinecraftPathfindingNode implements PathfindingNode {
 
         for (Direction direction : dirs) {
             BlockPos adjacentPosition = getNodeInDirection(direction);
-            if (adjacentPosition != null) {
-                adjacentNodes.add(new MinecraftPathfindingNode(world, adjacentPosition));
-            }
+            if (adjacentPosition == null) continue;
+            if (adjacentPosition.getY() > this.getY() && !canJumpFrom(this.world, this.position)) continue;
+            if (adjacentPosition.getY() < this.getY() && !canJumpFrom(this.world, adjacentPosition)) continue;
+
+            adjacentNodes.add(new MinecraftPathfindingNode(world, adjacentPosition));
         }
 
         return adjacentNodes;
@@ -91,6 +93,20 @@ public class MinecraftPathfindingNode implements PathfindingNode {
     public static boolean canStandOn(World world, BlockPos pos) {
         return world.getBlockState(pos).isSolidBlock(world, pos)
                 && isPassable(world, pos.up()) && isPassable(world, pos.up(2));
+    }
+
+
+    /**
+     * Like canStandOn, but checks for 3 blocks of air above
+     * @param world
+     * @param pos
+     * @return
+     */
+    public static boolean canJumpFrom(World world, BlockPos pos) {
+        return world.getBlockState(pos).isSolidBlock(world, pos)
+                && isPassable(world, pos.up())
+                && isPassable(world, pos.up(2))
+                && isPassable(world, pos.up(3));
     }
 
     public String toString() {
