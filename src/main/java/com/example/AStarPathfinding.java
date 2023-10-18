@@ -37,9 +37,9 @@ public class AStarPathfinding {
         while (!openList.isEmpty()) {
             iterations++;
             current = getSmallestElement(openList);
-            if (iterations % 100 == 0) {
-                LOGGER.info("AStarPathfinding::findPath iterations: " + iterations + " manhattan distance: " + heuristic(current.getNode(), goal));
-            }
+//            if (iterations % 100 == 0) {
+//                LOGGER.info("AStarPathfinding::findPath iterations: " + iterations + " manhattan distance: " + heuristic(current.getNode(), goal));
+//            }
 
             if (iterations > 1000) return path;
 
