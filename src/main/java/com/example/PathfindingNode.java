@@ -8,5 +8,7 @@ public interface PathfindingNode {
     double getZ();
     List<PathfindingNode> getAdjacentNodes();
 
+    double getCost();
+
     boolean equals(Object o);
 }

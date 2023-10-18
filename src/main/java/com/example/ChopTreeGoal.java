@@ -22,9 +22,8 @@ public class ChopTreeGoal extends Goal {
     private BlockPos targetTree = null;
     private BlockPos targetGround = null;
     private boolean movingToTree = false;
-
-    private int movingTimerSec = 0;
-    private BlockPos lastPos;
+    private boolean movingToChest = false;
+    private BlockPos targetChest;
 
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
 
@@ -35,17 +34,22 @@ public class ChopTreeGoal extends Goal {
         if (blacklist == null) {
             blacklist = new ArrayList<>();
         }
+        targetChest = agent.findChest();
     }
 
     @Override
     public boolean canStart() {
-        boolean ret = agent.hasAxe() && !hasTooMuchWood();
+        boolean ret = agent.hasAxe() && !hasTooMuchWood() && getNextTree();
         return ret;
     }
 
     @Override
     public boolean shouldContinue() {
-        boolean ret = agent.hasAxe() && !hasTooMuchWood();
+        boolean ret = (agent.hasAxe()
+                && !hasTooMuchWood()
+                && targetChest != null
+                && getNextTree()
+        ) || movingToChest || movingToTree;
         return ret;
     }
 
@@ -65,6 +69,7 @@ public class ChopTreeGoal extends Goal {
 
     private boolean isAtTree() {
         if (targetTree == null) return false;
+        movingToTree = false;
         return agent.getBlockPos().isWithinDistance(targetTree, 2.1)
                 || (
                 Math.abs(agent.getBlockX() - targetTree.getX()) <= 2
@@ -73,9 +78,53 @@ public class ChopTreeGoal extends Goal {
         );
     }
 
+    private boolean isAtChest() {
+        if (targetChest == null) return false;
+        return agent.getBlockPos().isWithinDistance(targetChest, 2.1);
+    }
+
     private double distanceFromTree() {
         if (targetTree == null) return 0D;
         return agent.getBlockPos().getManhattanDistance(targetTree);
+    }
+
+    private void tickAtTree() {
+        agent.stopNav();
+        agent.setStatus("At Tree");
+        movingToTree = false;
+        // Start chopping the tree
+        if (!isLog(agent.getWorld().getBlockState(targetTree).getBlock())) {
+            LOGGER.info("Weird, My target isn't a log. Resetting.");
+            resetGoal();
+            return;
+        }
+
+        agent.getWorld().breakBlock(targetTree, true);
+        if (isLog(agent.getWorld().getBlockState(targetTree.up()).getBlock())) {
+            // Move to the next block above
+            targetTree = targetTree.up();
+        } else {
+            agent.sayInChat("Well, I guess this tree is done.");
+            resetGoal();
+        }
+    }
+
+    private boolean getNextTree() {
+        // if current tree is gone, find a new one
+        if (targetTree == null || !isLog(agent.getWorld().getBlockState(targetTree).getBlock())) {
+            targetTree = findTree();
+        }
+        while (targetTree != null) {
+            targetGround = findGround(targetTree);
+            boolean possible = this.agent.navTo(targetGround);
+            if (targetGround != null && !possible) {
+                LOGGER.info("Can't navigate to " + targetGround.toShortString());
+            }
+            if (targetGround != null && possible) break;
+            blacklist.add(targetTree);
+            targetTree = findTree();
+        }
+        return targetTree != null;
     }
 
     @Override
@@ -86,55 +135,37 @@ public class ChopTreeGoal extends Goal {
         timer = 0;
 
         //LOGGER.info("ChopTreeGoal tick");
+        if (movingToChest) {
+            if (isAtChest()) resetGoal();
+            agent.setStatus("MT:Chest " + distanceFromTree());
+            return;
+        }
+
+        if (isAtTree()) {
+            movingToTree = false;
+            tickAtTree();
+            return;
+        }
+
+        if (movingToTree) {
+            agent.setStatus("MT:Tree " + distanceFromTree());
+            return;
+        }
+
 
         if (targetTree == null || targetGround == null) {
-            agent.setCustomName(Text.literal(agent.getRealName() + " (No Target)"));
-            targetTree = findTree();
-            while (targetTree != null) {
-                targetGround = findGround(targetTree);
-                boolean possible = this.agent.navTo(targetGround);
-                if (targetGround != null && !possible) {
-                    LOGGER.info("Can't navigate to " + targetGround.toShortString());
-                }
-                if (targetGround != null && possible) break;
-                blacklist.add(targetTree);
-                targetTree = findTree();
-            }
-
-            if (targetTree == null) {
-                agent.sayInChat("I can't find any trees.");
-                resetGoal();
+            if (!getNextTree()) {
+                agent.setStatus("No Trees");
+                BlockPos standable = agent.findStandableNearChest(this.targetChest);
+                agent.navTo(standable, true);
+                movingToChest = true;
                 return;
             }
-
-            agent.sayInChat("Moving to tree root (" + countWood() + "/32)");
+            //agent.sayInChat("Moving to tree root (" + countWood() + "/32)");
             this.agent.equipAxe();
-            agent.sayInChat("Moving to ground at " + targetGround.toShortString());
+            //agent.sayInChat("Moving to ground at " + targetGround.toShortString());
             agent.setCustomName(Text.literal(agent.getRealName() + " (Moving)"));
             movingToTree = true;
-        } else if (isAtTree()) {
-            agent.stopNav();
-            agent.setStatus("At Tree");
-            movingToTree = false;
-            // Start chopping the tree
-            if (!isLog(agent.getWorld().getBlockState(targetTree).getBlock())) {
-                LOGGER.info("Weird, My target isn't a log. Resetting.");
-                resetGoal();
-                return;
-            }
-
-            agent.getWorld().breakBlock(targetTree, true);
-            if (isLog(agent.getWorld().getBlockState(targetTree.up()).getBlock())) {
-                targetTree = targetTree.up();  // Move to the next block above
-            } else {
-                agent.sayInChat("Well, I guess this tree is done.");
-                resetGoal();
-            }
-        } else if (movingToTree) {
-            //movingTimerSec++;
-            agent.setStatus("MoveTree " + distanceFromTree());
-            // LOGGER.info("Moving to tree");
-            // agent.navTo(targetGround);
         }
     }
 
@@ -160,18 +191,19 @@ public class ChopTreeGoal extends Goal {
     }
 
     private BlockPos findTree() {
-        BlockPos currentPosition = agent.findChest();
+        BlockPos currentPosition = this.targetChest;
         if (currentPosition == null) {
             LOGGER.info("ChopTreeGoal::findTree Couldn't find a chest");
             return null;
         }
-        for (BlockPos pos : BlockPos.iterateOutwards(currentPosition, 60, 20, 60)) {  // Sample search radius values
+        int range = 100;
+        for (BlockPos pos : BlockPos.iterateOutwards(currentPosition, range, 40, range)) {
             BlockState state = agent.getWorld().getBlockState(pos);
             if (isLog(state.getBlock()) && !inBlackList(pos)) {
                 return pos;
             }
         }
-        LOGGER.info("Didn't find a tree within 60 blocks");
+        // LOGGER.info("Didn't find a tree within 60 blocks");
         return null;
     }
 
@@ -208,6 +240,7 @@ public class ChopTreeGoal extends Goal {
         targetTree = null;
         targetGround = null;
         movingToTree = false;
+        movingToChest = false;
         agent.stopNav();
     }
 

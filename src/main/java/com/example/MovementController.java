@@ -32,12 +32,12 @@ public class MovementController {
         LOGGER.info("MovementController::moveTo called for " + goal.toShortString());
         MinecraftPathfindingNode startNode = pathfindingAdapter.getNodeAt(agent.getBlockPos().down());
         MinecraftPathfindingNode goalNode = pathfindingAdapter.getNodeAt(goal);
-        if (!startNode.canStandOn(startNode.getBlockPos())) {
-            LOGGER.info("MovementController::moveTo start node is not standable");
+        if (!startNode.notStrictCanStandOn()) {
+            LOGGER.info("MovementController::moveTo start node is not standable (strict=false)");
             return false;
         }
-        if (!goalNode.canStandOn(goalNode.getBlockPos())) {
-            LOGGER.info("MovementController::moveTo goal node is not standable");
+        if (!goalNode.notStrictCanStandOn()) {
+            LOGGER.info("MovementController::moveTo goal node is not standable (strict=false)");
             return false;
         }
         this.path = findPath(startNode, goalNode);

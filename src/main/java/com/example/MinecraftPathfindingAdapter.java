@@ -11,10 +11,10 @@ public class MinecraftPathfindingAdapter {
     }
 
     public MinecraftPathfindingNode getNodeAt(BlockPos position) {
-        return new MinecraftPathfindingNode(world, position);
+        return new MinecraftPathfindingNode(world, position, 0D);
     }
 
     public MinecraftPathfindingNode getNodeAt(PathfindingNode node) {
-        return new MinecraftPathfindingNode(world, new BlockPos((int) node.getX(), (int) node.getY(), (int) node.getZ()));
+        return new MinecraftPathfindingNode(world, new BlockPos((int) node.getX(), (int) node.getY(), (int) node.getZ()), 0D);
     }
 }

@@ -50,7 +50,7 @@ public class AStarPathfinding {
 
             List<PathfindingNode> neighbors = current.getNode().getAdjacentNodes();
             for (PathfindingNode neighbor : neighbors) {
-                double costSoFar = current.getCostSoFar() + 1;  // Assuming equal cost for all neighbors for now
+                double costSoFar = current.getCostSoFar() + neighbor.getCost();
 
                 // Check if node is in the closed list
                 NodeRecord closedListRecord = findNodeInList(closedList, neighbor);
@@ -91,7 +91,7 @@ public class AStarPathfinding {
 
     private double heuristic(PathfindingNode a, PathfindingNode b) {
         // This can be a simple Manhattan distance for now.
-        return 2 * (Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY()) + Math.abs(a.getZ() - b.getZ()));
+        return 1 * (Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY()) + Math.abs(a.getZ() - b.getZ()));
     }
 
     private NodeRecord getSmallestElement(List<NodeRecord> list) {

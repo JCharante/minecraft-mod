@@ -12,12 +12,15 @@ import java.util.List;
 public class MinecraftPathfindingNode implements PathfindingNode {
     private final World world;
     private final BlockPos position;
+
+    private final double cost;
     private static final Direction[] dirs = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
 
-    public MinecraftPathfindingNode(World world, BlockPos position) {
+    public MinecraftPathfindingNode(World world, BlockPos position, double cost) {
         this.world = world;
         this.position = position;
+        this.cost = cost;
     }
 
     @Override
@@ -40,6 +43,11 @@ public class MinecraftPathfindingNode implements PathfindingNode {
     }
 
     @Override
+    public double getCost() {
+        return this.cost;
+    }
+
+    @Override
     public List<PathfindingNode> getAdjacentNodes() {
         List<PathfindingNode> adjacentNodes = new ArrayList<>();
 
@@ -49,7 +57,22 @@ public class MinecraftPathfindingNode implements PathfindingNode {
             if (adjacentPosition.getY() > this.getY() && !canJumpFrom(this.world, this.position)) continue;
             if (adjacentPosition.getY() < this.getY() && !canJumpFrom(this.world, adjacentPosition)) continue;
 
-            adjacentNodes.add(new MinecraftPathfindingNode(world, adjacentPosition));
+            double adjacentCost = 0.5;
+            if (adjacentPosition.getY() > this.getY()) adjacentCost += 0.3; // uphill penalty
+            if (adjacentPosition.getY() < this.getY()) adjacentCost += 0.1; // downhill is easier
+            BlockState state = world.getBlockState(adjacentPosition);
+            boolean goodRoadMaterial = state.isOf(Blocks.BIRCH_WOOD)
+                    || state.isOf(Blocks.BIRCH_STAIRS)
+                    || state.isOf(Blocks.OAK_WOOD)
+                    || state.isOf(Blocks.OAK_STAIRS)
+                    || state.isOf(Blocks.JUNGLE_WOOD)
+                    || state.isOf(Blocks.JUNGLE_STAIRS)
+                    || state.isOf(Blocks.STONE_STAIRS)
+                    || state.isOf(Blocks.COBBLESTONE)
+                    || state.isOf(Blocks.COBBLESTONE_STAIRS);
+            if (!goodRoadMaterial) adjacentCost += 0.5;
+
+            adjacentNodes.add(new MinecraftPathfindingNode(world, adjacentPosition, adjacentCost));
         }
 
         return adjacentNodes;
@@ -79,6 +102,14 @@ public class MinecraftPathfindingNode implements PathfindingNode {
         return canStandOn(this.world, pos);
     }
 
+    public boolean canStandOn() {
+        return canStandOn(this.world, this.position);
+    }
+
+    public boolean notStrictCanStandOn() {
+        return notStrictCanStandOn(this.world, this.position);
+    }
+
 
     public static boolean isPassable(World world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
@@ -93,6 +124,10 @@ public class MinecraftPathfindingNode implements PathfindingNode {
     public static boolean canStandOn(World world, BlockPos pos) {
         return world.getBlockState(pos).isSolidBlock(world, pos)
                 && isPassable(world, pos.up()) && isPassable(world, pos.up(2));
+    }
+
+    public static boolean notStrictCanStandOn(World world, BlockPos pos) {
+        return canStandOn(world, pos) || canStandOn(world, pos.down());
     }
 
 

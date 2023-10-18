@@ -17,6 +17,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -148,13 +149,22 @@ public class AgentEntity extends PathAwareEntity {
         return false;
     }
 
+    @Override
+    public void checkDespawn() {
+        return;
+    }
+
     public void equipAxe() {
-        LOGGER.info("Equipping axe to agent.");
         // Loop through the agent's inventory and check for any type of axe
         for (int i = 0; i < this.getInventory().size(); i++) {
             ItemStack stack = this.getInventory().getStack(i);
             if (stack.getItem() instanceof AxeItem) {
+                LOGGER.info("Equipping axe to agent. Slot " + i);
+                this.setCurrentHand(Hand.MAIN_HAND);
                 this.equipStack(EquipmentSlot.MAINHAND, stack);
+                this.setCurrentHand(Hand.MAIN_HAND);
+                ItemStack mainHandItem = this.getEquippedStack(EquipmentSlot.MAINHAND);
+                LOGGER.info("Item in main hand after equipAxe: " + mainHandItem);
             }
         }
     }
@@ -179,14 +189,26 @@ public class AgentEntity extends PathAwareEntity {
         }
     }
 
-    public boolean navTo(BlockPos targetBlockPos) {
+    public boolean navTo(BlockPos targetBlockPos, boolean tpIfFail) {
         LOGGER.info("Agent navTo " + targetBlockPos);
         if (targetBlockPos == null) {
             LOGGER.info("You tried to make me navTo null!");
             return false;
         };
         LOGGER.info("Agent navTo " + targetBlockPos);
-        return movementController.moveTo(targetBlockPos);
+        boolean possible = movementController.moveTo(targetBlockPos);
+        if (possible || !tpIfFail) return possible;
+        BlockPos chest = this.findChest();
+        if (chest == null) return false;
+        BlockPos ground = this.findStandableNearChest(chest);
+        if (ground == null) return false;
+        this.teleport(ground.getX(), ground.getY() + 2, ground.getZ());
+        sayInChat("Sorry, but I had to teleport to the ground near the chest after finding myself stuck.");
+        return false;
+    }
+
+    public boolean navTo(BlockPos targetBlockPos) {
+        return this.navTo(targetBlockPos, false);
     }
 
     public void stopNav() {
