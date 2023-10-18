@@ -23,27 +23,33 @@ public class MovementController {
         this.pathfindingAdapter = new MinecraftPathfindingAdapter(world);
     }
 
-    public void moveTo(BlockPos goal) {
+    public void clear() {
+        this.path = null;
+        this.currentIndex = 0;
+    }
+
+    public boolean moveTo(BlockPos goal) {
         LOGGER.info("MovementController::moveTo called for " + goal.toShortString());
         MinecraftPathfindingNode startNode = pathfindingAdapter.getNodeAt(agent.getBlockPos().down());
         MinecraftPathfindingNode goalNode = pathfindingAdapter.getNodeAt(goal);
         if (!startNode.canStandOn(startNode.getBlockPos())) {
             LOGGER.info("MovementController::moveTo start node is not standable");
-            return;
+            return false;
         }
         if (!goalNode.canStandOn(goalNode.getBlockPos())) {
             LOGGER.info("MovementController::moveTo goal node is not standable");
-            return;
+            return false;
         }
         this.path = findPath(startNode, goalNode);
         if (path == null || path.size() == 0) {
             LOGGER.info("No path found!!");
-            return;
+            return false;
         }
         // Start at the beginning of the path.
         currentIndex = 0;
 
         LOGGER.info("MovementController::moveTo finished");
+        return true;
     }
 
     public void tick() {
@@ -56,13 +62,14 @@ public class MovementController {
         }
 
         wasNullLastTime = false;
-        LOGGER.info("MovementController tick");
+        //LOGGER.info("MovementController::tick");
 
         PathfindingNode currentNode = path.get(currentIndex);
         BlockPos currentTarget = pathfindingAdapter.getNodeAt(currentNode).getBlockPos();
 
         // If the agent is close enough to the current target node, move to the next node.
-        if (agent.getBlockPos().isWithinDistance(currentTarget, 1.5)) {
+        if (agent.getBlockPos().isWithinDistance(currentTarget,  1.5)) {
+            // LOGGER.info("MovementController::tick is within distance to current target");
             currentIndex++;
             if (currentIndex < path.size()) {
                 currentTarget = pathfindingAdapter.getNodeAt(path.get(currentIndex)).getBlockPos();
@@ -72,7 +79,7 @@ public class MovementController {
             }
         }
 
-        LOGGER.info("Using built in navigation");
+        // LOGGER.info("Using built in navigation");
         // Use the built-in navigation to move to the current target.
         agent.getNavigation().startMovingTo(currentTarget.getX(), currentTarget.getY(), currentTarget.getZ(), 0.5);
     }

@@ -14,6 +14,7 @@ import net.minecraft.item.AxeItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -38,11 +39,11 @@ public class AgentEntity extends PathAwareEntity {
     public AgentEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
         super(entityType, world);
         this.inventory = new SimpleInventory(9);  // Inventory with 9 slots
-        this.setCustomName(Text.of("Name Missing"));
         this.setCustomNameVisible(true);
         getNavigation().setCanSwim(true);
         getNavigation().setSpeed(0.5);
         this.movementController = new MovementController(this, world);
+        this.setPersistent();
     }
 
 
@@ -68,6 +69,9 @@ public class AgentEntity extends PathAwareEntity {
             inventoryList.add(itemNbt);
         }
         nbt.put("Inventory", inventoryList);
+        if (this.name != null) {
+            nbt.put("AgentRealName", NbtString.of(this.name));
+        }
     }
 
     @Override
@@ -77,7 +81,20 @@ public class AgentEntity extends PathAwareEntity {
         for (int i = 0; i < inventoryList.size(); i++) {
             this.inventory.setStack(i, ItemStack.fromNbt(inventoryList.getCompound(i)));
         }
+        if (nbt.contains("AgentRealName")) {
+            this.name = nbt.getString("AgentRealName");
+        }
     }
+
+
+    @Override
+    public void remove(RemovalReason reason) {
+        super.remove(reason);
+        // Add logging or chat message here to see when the entity is removed and under what conditions
+        sayInChat("I was removed!");
+        LOGGER.info("AgentEntity removed.");
+    }
+
 
 
     @Override
@@ -142,14 +159,6 @@ public class AgentEntity extends PathAwareEntity {
         }
     }
 
-//    public void pickupItemsNearby() {
-//        List<ItemEntity> itemsNearby = this.getWorld().getEntitiesByClass(ItemEntity.class, this.getBoundingBox().expand(1.5, 1.0, 1.5), itemEntity -> true);
-//        for (ItemEntity itemEntity : itemsNearby) {
-//            this.sendPickup(itemEntity, 1);
-//            itemEntity.remove(UNLOADED_WITH_PLAYER);
-//        }
-//    }
-
     public void pickupItemsNearby() {
         List<ItemEntity> itemsNearby = this.getWorld().getEntitiesByClass(ItemEntity.class, this.getBoundingBox().expand(1.5, 1.0, 1.5), itemEntity -> true);
         for (ItemEntity itemEntity : itemsNearby) {
@@ -170,14 +179,18 @@ public class AgentEntity extends PathAwareEntity {
         }
     }
 
-    public void navTo(BlockPos targetBlockPos) {
+    public boolean navTo(BlockPos targetBlockPos) {
         LOGGER.info("Agent navTo " + targetBlockPos);
         if (targetBlockPos == null) {
             LOGGER.info("You tried to make me navTo null!");
-            return;
+            return false;
         };
-        movementController.moveTo(targetBlockPos);
         LOGGER.info("Agent navTo " + targetBlockPos);
+        return movementController.moveTo(targetBlockPos);
+    }
+
+    public void stopNav() {
+        movementController.clear();
     }
 
     @Override
@@ -194,12 +207,20 @@ public class AgentEntity extends PathAwareEntity {
         }
     }
 
+    @Override
+    public void onDeath(DamageSource source) {
+        super.onDeath(source);
+        sayInChat("I died due to " + source.getName() + "!");
+    }
+
+
+
     public BlockPos findChest() {
         BlockPos currentPosition = this.getBlockPos();
-        int searchRadius = 50;
+        int searchRadius = 100;
 
         // Loop over a small area around the entity to check for chests
-        for (BlockPos pos : BlockPos.iterateOutwards(currentPosition, searchRadius, 20, searchRadius)) {
+        for (BlockPos pos : BlockPos.iterateOutwards(currentPosition, searchRadius, 30, searchRadius)) {
             BlockState state = this.getWorld().getBlockState(pos);
             Block block = state.getBlock();
 

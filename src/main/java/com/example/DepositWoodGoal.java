@@ -16,10 +16,11 @@ import org.slf4j.LoggerFactory;
 public class DepositWoodGoal extends Goal {
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
     private final AgentEntity agent;
-    private final int checkInterval = 20;
+    private final int checkInterval = 10;
     private int timer = 0;
     private boolean movingToChest;
     private BlockPos targetChest = null;
+    private BlockPos targetGround = null;
 
 
     public DepositWoodGoal(AgentEntity agent) {
@@ -41,26 +42,38 @@ public class DepositWoodGoal extends Goal {
         if (timer++ < checkInterval) return;
         timer = 0;
 
-        if (!movingToChest) {
+        if (targetChest == null || targetGround == null) {
             targetChest = agent.findChest();
+            targetGround = agent.findStandableNearChest(targetChest);
             if (targetChest == null) {
                 agent.sayInChat("Hmm, no chests near me to dropoff my wood.");
                 return;
             };
-
-            agent.navTo(targetChest);
+            if (targetGround == null) {
+                agent.sayInChat("There is a chest, but I can't reach it.");
+                return;
+            }
+            agent.navTo(targetGround);
             movingToChest = true;
+            agent.setStatus("Going to chest");
             agent.sayInChat("Alright boss, I'm coming back to a chest.");
+
         } else if (movingToChest) {
-            agent.navTo(targetChest);
-            if (agent.getBlockPos().isWithinDistance(targetChest, 2.0)) {
+            // agent.navTo(targetGround);
+            agent.setStatus("Moving to chest");
+            if (agent.getBlockPos().isWithinDistance(targetChest, 2.5)) {
+                agent.stopNav();
+                agent.setStatus("At chest");
                 agent.sayInChat("I'm at the chest!");
                 dropOffWood(targetChest);
                 movingToChest = false;
                 targetChest = null;
+            } else {
+                LOGGER.info("DepositWoodGoal::tick ground is " + agent.getBlockPos().getManhattanDistance(targetChest));
             }
         }
     }
+
 
     private boolean hasTooMuchWood() {
         // TODO: make this search for wood
@@ -71,6 +84,21 @@ public class DepositWoodGoal extends Goal {
             }
         }
         return false;
+    }
+
+    @Override
+    public void start() {
+        super.start();
+        //agent.sayInChat("Starting DepositWoodGoal");
+        //agent.setCustomName(Text.literal(agent.getRealName() + " (DepositWoodGoal)"));
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        agent.stopNav();
+        //agent.sayInChat("Stopping DepositWoodGoal");
+        //agent.setCustomName(Text.of(agent.getRealName()));
     }
 
 

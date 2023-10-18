@@ -9,6 +9,7 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.item.AxeItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,20 @@ public class GetEquipmentGoal extends Goal {
     public boolean canStart() {
         // This goal can start if the agent doesn't have an axe
         return !agent.hasAxe();
+    }
+
+    @Override
+    public void start() {
+        super.start();
+        agent.sayInChat("Starting GetEquipmentGoal");
+        agent.setCustomName(Text.literal(agent.getRealName() + " (Getting Equipment)"));
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        agent.sayInChat("Stopping GetEquipmentGoal");
+        agent.setCustomName(Text.of(agent.getRealName()));
     }
 
     @Override

@@ -93,4 +93,8 @@ public class MinecraftPathfindingNode implements PathfindingNode {
                 && isPassable(world, pos.up()) && isPassable(world, pos.up(2));
     }
 
+    public String toString() {
+        return position.toShortString();
+    }
+
 }

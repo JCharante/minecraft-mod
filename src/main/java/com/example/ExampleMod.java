@@ -38,6 +38,7 @@ public class ExampleMod implements ModInitializer {
 	private static int spawnAgent(ServerCommandSource source, String name) {
 		ServerWorld world = source.getWorld();
 		AgentEntity agent = new AgentEntity(ExampleMod.AGENT_ENTITY, world);
+		agent.setRealName(name);
 		agent.setCustomName(Text.of(name));
 		agent.setCustomNameVisible(true);
 
