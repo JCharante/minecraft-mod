@@ -15,9 +15,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +30,28 @@ public class AgentEntity extends PathAwareEntity {
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
     private final SimpleInventory inventory;
     private AgentRole currentRole;
+    private MovementController movementController;
+
+    private String name;
+
 
     public AgentEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
         super(entityType, world);
         this.inventory = new SimpleInventory(9);  // Inventory with 9 slots
         this.setCustomName(Text.of("Name Missing"));
         this.setCustomNameVisible(true);
+        getNavigation().setCanSwim(true);
+        getNavigation().setSpeed(0.5);
+        this.movementController = new MovementController(this, world);
+    }
+
+
+    public void setRealName(String name) {
+        this.name = name;
+    }
+
+    public String getRealName() {
+        return this.name;
     }
 
     public SimpleInventory getInventory() {
@@ -67,10 +83,16 @@ public class AgentEntity extends PathAwareEntity {
     @Override
     public void tick() {
         super.tick();
-        this.pickupItemsNearby();
-        if (this.currentRole == null) {
-            this.currentRole = AgentRole.LUMBERJACK;
-            this.addGoals();
+        if (!this.getWorld().isClient) {
+            MinecraftServer server = this.getWorld().getServer();
+            if (server != null) {
+                movementController.tick();
+                this.pickupItemsNearby();
+                if (this.currentRole == null) {
+                    this.currentRole = AgentRole.LUMBERJACK;
+                    this.addGoals();
+                }
+            }
         }
     }
 
@@ -92,9 +114,7 @@ public class AgentEntity extends PathAwareEntity {
         if (!this.getWorld().isClient) {
             MinecraftServer server = this.getWorld().getServer();
             if (server != null) {
-                MutableText text = (MutableText) this.getDisplayName();
-                text.append(": ");
-                text.append(message);
+                Text text = Text.literal(this.name + ": " + message);
                 server.getPlayerManager().broadcast(text, false);
             }
         }
@@ -150,17 +170,20 @@ public class AgentEntity extends PathAwareEntity {
         }
     }
 
-    public void navTo(BlockPos pos) {
-        if (pos == null) {
+    public void navTo(BlockPos targetBlockPos) {
+        LOGGER.info("Agent navTo " + targetBlockPos);
+        if (targetBlockPos == null) {
             LOGGER.info("You tried to make me navTo null!");
             return;
         };
-        this.getNavigation().startMovingTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0.3);
+        movementController.moveTo(targetBlockPos);
+        LOGGER.info("Agent navTo " + targetBlockPos);
     }
 
     @Override
     protected void dropEquipment(DamageSource source, int lootingMultiplier, boolean allowDrops) {
         super.dropEquipment(source, lootingMultiplier, allowDrops);
+        sayInChat("I died!");
 
         // Loop through the agent's inventory and drop all items
         for (int i = 0; i < this.getInventory().size(); i++) {
@@ -187,4 +210,39 @@ public class AgentEntity extends PathAwareEntity {
         }
         return null;
     }
+
+    public void setStatus(String status) {
+        this.setCustomName(Text.literal(this.getRealName() + " (" + status + ")"));
+    }
+
+    public BlockPos findStandableNearChest(BlockPos chest) {
+        // Starting by going down one block from the chest
+        BlockPos startingPosition = chest.down();
+
+        Direction[] dirs = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+
+        // Checking the block directly beneath the chest first
+        if (MinecraftPathfindingNode.canStandOn(this.getWorld(), startingPosition)) {
+            return startingPosition;
+        }
+
+        // Then checking the blocks adjacent to that
+        for (Direction direction : dirs) {
+            BlockPos adjacentPosition = startingPosition.offset(direction);
+            if (MinecraftPathfindingNode.canStandOn(this.getWorld(), adjacentPosition)) {
+                return adjacentPosition;
+            }
+        }
+
+        // If no suitable block is found adjacent to the chest, we check the blocks at a distance of 2 from the chest.
+        for (Direction direction : dirs) {
+            BlockPos fartherPosition = startingPosition.offset(direction, 2); // Going two blocks in each direction
+            if (MinecraftPathfindingNode.canStandOn(this.getWorld(), fartherPosition)) {
+                return fartherPosition;
+            }
+        }
+
+        return null; // Return null if no suitable position is found
+    }
+
 }
