@@ -1,5 +1,6 @@
 package com.example;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -7,6 +8,8 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class MinecraftPathfindingNode implements PathfindingNode {
@@ -47,6 +50,25 @@ public class MinecraftPathfindingNode implements PathfindingNode {
         return this.cost;
     }
 
+    public static boolean blockMatches(Block block, List<Block> blocks) {
+        for (Block b : blocks) {
+            if (block.equals(b)) return true;
+        }
+        return false;
+    }
+
+    public static final List<Block> ROAD_MATERIALS = Collections.unmodifiableList(Arrays.asList(
+            Blocks.BIRCH_WOOD,
+            Blocks.BIRCH_STAIRS,
+            Blocks.OAK_WOOD,
+            Blocks.OAK_STAIRS,
+            Blocks.JUNGLE_WOOD,
+            Blocks.JUNGLE_STAIRS,
+            Blocks.STONE_STAIRS,
+            Blocks.COBBLESTONE,
+            Blocks.COBBLESTONE_STAIRS
+    ));
+
     @Override
     public List<PathfindingNode> getAdjacentNodes() {
         List<PathfindingNode> adjacentNodes = new ArrayList<>();
@@ -58,19 +80,16 @@ public class MinecraftPathfindingNode implements PathfindingNode {
             if (adjacentPosition.getY() < this.getY() && !canJumpFrom(this.world, adjacentPosition)) continue;
 
             double adjacentCost = 0.5;
-            if (adjacentPosition.getY() > this.getY()) adjacentCost += 0.3; // uphill penalty
-            if (adjacentPosition.getY() < this.getY()) adjacentCost += 0.1; // downhill is easier
             BlockState state = world.getBlockState(adjacentPosition);
-            boolean goodRoadMaterial = state.isOf(Blocks.BIRCH_WOOD)
-                    || state.isOf(Blocks.BIRCH_STAIRS)
-                    || state.isOf(Blocks.OAK_WOOD)
-                    || state.isOf(Blocks.OAK_STAIRS)
-                    || state.isOf(Blocks.JUNGLE_WOOD)
-                    || state.isOf(Blocks.JUNGLE_STAIRS)
-                    || state.isOf(Blocks.STONE_STAIRS)
-                    || state.isOf(Blocks.COBBLESTONE)
-                    || state.isOf(Blocks.COBBLESTONE_STAIRS);
-            if (!goodRoadMaterial) adjacentCost += 0.5;
+            Block block = state.getBlock();
+            boolean goodRoadMaterial = MinecraftPathfindingNode.blockMatches(block, ROAD_MATERIALS);
+
+            if (!goodRoadMaterial) adjacentCost += 2.0;
+            if (adjacentPosition.getY() > this.getY()) { // uphill penalty
+                if (!goodRoadMaterial) adjacentCost += 1.5;
+            } else if (adjacentPosition.getY() < this.getY()) { // downhill is easier
+                if (!goodRoadMaterial) adjacentCost += 1.0;
+            }
 
             adjacentNodes.add(new MinecraftPathfindingNode(world, adjacentPosition, adjacentCost));
         }

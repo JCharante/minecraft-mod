@@ -41,7 +41,7 @@ public class AStarPathfinding {
 //                LOGGER.info("AStarPathfinding::findPath iterations: " + iterations + " manhattan distance: " + heuristic(current.getNode(), goal));
 //            }
 
-            if (iterations > 1000) return path;
+            if (iterations > 10000) return path;
 
             if (current.getNode().equals(goal)) {
                 LOGGER.info("AStarPathfinding::findPath found goal");

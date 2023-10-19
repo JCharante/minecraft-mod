@@ -15,6 +15,14 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 
 
+enum ChopTreeGoalStates {
+    MOVING_TO_CHEST,
+    MOVING_TO_TREE,
+    AT_TREE,
+    AT_CHEST,
+    NO_TREE,
+}
+
 public class ChopTreeGoal extends Goal {
     private static final int checkInterval = 10;
     private int timer = 0;
@@ -50,6 +58,9 @@ public class ChopTreeGoal extends Goal {
                 && targetChest != null
                 && getNextTree()
         ) || movingToChest || movingToTree;
+        if (!ret) {
+            agent.sayInChat("I shouldn't continue chopping tree goal");
+        }
         return ret;
     }
 
@@ -69,7 +80,6 @@ public class ChopTreeGoal extends Goal {
 
     private boolean isAtTree() {
         if (targetTree == null) return false;
-        movingToTree = false;
         return agent.getBlockPos().isWithinDistance(targetTree, 2.1)
                 || (
                 Math.abs(agent.getBlockX() - targetTree.getX()) <= 2
@@ -111,8 +121,15 @@ public class ChopTreeGoal extends Goal {
 
     private boolean getNextTree() {
         // if current tree is gone, find a new one
-        if (targetTree == null || !isLog(agent.getWorld().getBlockState(targetTree).getBlock())) {
+        if (
+                targetTree == null
+                || targetGround == null
+                || !isLog(agent.getWorld().getBlockState(targetTree).getBlock())
+                || inBlackList(targetTree)
+        ) {
             targetTree = findTree();
+        } else {
+            return true; // we're fine
         }
         while (targetTree != null) {
             targetGround = findGround(targetTree);
@@ -134,7 +151,6 @@ public class ChopTreeGoal extends Goal {
         if (timer++ < checkInterval) return;
         timer = 0;
 
-        //LOGGER.info("ChopTreeGoal tick");
         if (movingToChest) {
             if (isAtChest()) resetGoal();
             agent.setStatus("MT:Chest " + distanceFromTree());
@@ -155,6 +171,7 @@ public class ChopTreeGoal extends Goal {
 
         if (targetTree == null || targetGround == null) {
             if (!getNextTree()) {
+                LOGGER.info("No trees found");
                 agent.setStatus("No Trees");
                 BlockPos standable = agent.findStandableNearChest(this.targetChest);
                 agent.navTo(standable, true);
@@ -165,7 +182,16 @@ public class ChopTreeGoal extends Goal {
             this.agent.equipAxe();
             //agent.sayInChat("Moving to ground at " + targetGround.toShortString());
             agent.setCustomName(Text.literal(agent.getRealName() + " (Moving)"));
+            agent.navTo(targetGround);
             movingToTree = true;
+            LOGGER.info("ChopTreeGoal::tick moving to tree");
+        } else {
+            LOGGER.info("ChopTreeGoal::tick shouldn't get here");
+            LOGGER.info("targetTree " + targetTree.toShortString());
+            LOGGER.info("targetGround " + targetGround.toShortString());
+            LOGGER.info("movingToTree" + movingToTree);
+            LOGGER.info("movingToChest" + movingToChest);
+            LOGGER.info("targetChest" + targetChest.toShortString());
         }
     }
 
@@ -196,9 +222,19 @@ public class ChopTreeGoal extends Goal {
             LOGGER.info("ChopTreeGoal::findTree Couldn't find a chest");
             return null;
         }
+        LOGGER.info("ChopTreeGoal::findTree Finding a tree...");
         int range = 100;
         for (BlockPos pos : BlockPos.iterateOutwards(currentPosition, range, 40, range)) {
+            BlockPos potentialPos = pos.down();
             BlockState state = agent.getWorld().getBlockState(pos);
+            BlockState potentialState = agent.getWorld().getBlockState(potentialPos);
+            // find bottom of tree
+            while (isLog(potentialState.getBlock()) && !inBlackList(potentialPos)) {
+                pos = potentialPos;
+                state = potentialState;
+                potentialPos = potentialPos.down();
+                potentialState = agent.getWorld().getBlockState(potentialPos);
+            }
             if (isLog(state.getBlock()) && !inBlackList(pos)) {
                 return pos;
             }

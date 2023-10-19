@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class DepositWoodGoal extends Goal {
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
     private final AgentEntity agent;
-    private final int checkInterval = 10;
+    private final int checkInterval = 20;
     private int timer = 0;
     private boolean movingToChest;
     private BlockPos targetChest = null;
@@ -59,7 +59,7 @@ public class DepositWoodGoal extends Goal {
             agent.sayInChat("Alright boss, I'm coming back to a chest.");
 
         } else if (movingToChest) {
-            // agent.navTo(targetGround);
+            agent.navTo(targetGround);
             agent.setStatus("Moving to chest");
             if (agent.getBlockPos().isWithinDistance(targetChest, 2.5)) {
                 agent.stopNav();
@@ -69,7 +69,7 @@ public class DepositWoodGoal extends Goal {
                 movingToChest = false;
                 targetChest = null;
             } else {
-                LOGGER.info("DepositWoodGoal::tick ground is " + agent.getBlockPos().getManhattanDistance(targetChest));
+                LOGGER.info("DepositWoodGoal::tick ground distance " + agent.getBlockPos().getManhattanDistance(targetChest));
             }
         }
     }
