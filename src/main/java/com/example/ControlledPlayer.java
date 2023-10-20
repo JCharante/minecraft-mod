@@ -1,13 +1,23 @@
 package com.example;
 
-import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.text.Text;
 
 public class ControlledPlayer {
-    public FakePlayer player;
+    public CustomPlayer player;
 
-    public ControlledPlayer(FakePlayer player) {
+    public ControlledPlayer(CustomPlayer player) {
         this.player = player;
+    }
+
+    public void tick() {
+        player.playerTick();
+//        this.player.interactionManager.update();
+//        this.player.baseTick();
+////        Criteria.TICK.trigger(this.player);
+////        if (this.player.levitationStartPos != null) {
+////            Criteria.LEVITATION.trigger(this, this.levitationStartPos, this.age - this.levitationStartTick);
+////        }
+//        this.player.tickFallStartPos();
     }
 
     public void performAction() {

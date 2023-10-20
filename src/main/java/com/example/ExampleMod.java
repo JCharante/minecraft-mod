@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -54,7 +53,7 @@ public class ExampleMod implements ModInitializer {
 		GameProfile profile = new GameProfile(UUID.randomUUID(), name);
 		gameProfileManager.addProfile(profile);
 		ServerWorld world = source.getWorld();
-		FakePlayer fakePlayer = FakePlayer.get(world, profile);
+		CustomPlayer fakePlayer = CustomPlayer.get(world, profile);
 
 		PlayerListS2CPacket packet = new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, fakePlayer);
 		source.getServer().getPlayerManager().sendToAll(packet);
@@ -83,7 +82,7 @@ public class ExampleMod implements ModInitializer {
 		server.getPlayerManager().broadcast(Text.literal("Spawn Players function called!"), false);
 		for (GameProfile profile : gameProfileManager.getGameProfiles()) {
 			LOGGER.info("Adding fake player: " + profile.getName());
-			FakePlayer fakePlayer = FakePlayer.get(world, profile);
+			CustomPlayer fakePlayer = CustomPlayer.get(world, profile);
 			fakePlayers.add(new ControlledPlayer(fakePlayer));
 			server.getPlayerManager().loadPlayerData(fakePlayer);
 			PlayerListS2CPacket packet = new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, fakePlayer);
@@ -94,6 +93,8 @@ public class ExampleMod implements ModInitializer {
 			}
 
 			world.spawnEntity(fakePlayer);
+//			LOGGER.info(fakePlayer.interactionManager.getGameMode().asString());
+
 			server.getPlayerManager().broadcast(Text.literal("Sent PlayerListS2CPacket to all players"), false);
 			server.sendMessage(Text.literal("Sent PlayerListS2CPacket to all players"));
 			LOGGER.info("Sent PlayerListS2CPacket to all players.");
@@ -113,7 +114,7 @@ public class ExampleMod implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STOPPING.register((server) -> {
 			LOGGER.info("Server is stopping, saving player data");
 			for (ControlledPlayer fakePlayer: fakePlayers) {
-				FakePlayer player = fakePlayer.player;
+				CustomPlayer player = fakePlayer.player;
 				LOGGER.info(player.getName().getString());
 				try {
 					finalSavePlayerDataMethod.invoke(server.getPlayerManager(), player);
@@ -135,11 +136,14 @@ public class ExampleMod implements ModInitializer {
 		ServerLoginConnectionEvents.INIT.register((ServerLoginNetworkHandler handler, MinecraftServer server) -> {
 			ServerTickEvents.END_SERVER_TICK.register(server1 -> {
 				timer++;
-				if (timer > 200 && !executed) { // Adjust this value to increase/decrease delay
+				if (timer > 100 && !executed) { // Adjust this value to increase/decrease delay
 					server.submit(() -> {
 						executed = true;
 						spawnPlayers(server);
 					});
+				}
+				for (ControlledPlayer fakePlayer : fakePlayers) {
+					fakePlayer.tick();
 				}
 			});
 		});
