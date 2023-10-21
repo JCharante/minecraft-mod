@@ -22,7 +22,6 @@ import net.minecraft.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ import java.util.UUID;
 
 public class ExampleMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
-	public static final GameProfileManager gameProfileManager = new GameProfileManager(new File("gameProfiles.json"));
+	public static GameProfileManager gameProfileManager;
 
 	public ArrayList<ControlledPlayer> fakePlayers;
 
@@ -127,6 +126,7 @@ public class ExampleMod implements ModInitializer {
 
 	private void loadNPCs() {
 		ServerLoginConnectionEvents.INIT.register((ServerLoginNetworkHandler handler, MinecraftServer server) -> {
+			gameProfileManager =  new GameProfileManager(server, server.getOverworld());
 			ServerTickEvents.END_SERVER_TICK.register(server1 -> {
 				timer++;
 				if (timer > 100 && !executed) { // Adjust this value to increase/decrease delay
@@ -182,7 +182,7 @@ public class ExampleMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		fakePlayers = new ArrayList<ControlledPlayer>();
+		fakePlayers = new ArrayList<>();
 		setupPlayerSave();
 		greetOnJoin();
 		loadNPCs();
