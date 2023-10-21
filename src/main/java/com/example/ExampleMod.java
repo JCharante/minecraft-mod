@@ -33,6 +33,10 @@ public class ExampleMod implements ModInitializer {
 
 	public ArrayList<ControlledPlayer> fakePlayers;
 
+	private int timer = 0;
+	private boolean executed = false;
+	private Kingdom kingdom;
+
 //	public static final EntityType<AgentEntity> AGENT_ENTITY = Registry.register(
 //			Registries.ENTITY_TYPE,
 //			new Identifier("mymod", "agent_entity"),
@@ -66,8 +70,7 @@ public class ExampleMod implements ModInitializer {
 		return 1;
 	}
 
-	private int timer = 0;
-	private boolean executed = false;
+
 
 	private void spawnPlayers(MinecraftServer server) {
 		ServerWorld world = server.getOverworld();
@@ -126,6 +129,7 @@ public class ExampleMod implements ModInitializer {
 
 	private void loadNPCs() {
 		ServerLoginConnectionEvents.INIT.register((ServerLoginNetworkHandler handler, MinecraftServer server) -> {
+			kingdom = new Kingdom(server, server.getOverworld(), "Emerald");
 			gameProfileManager =  new GameProfileManager(server, server.getOverworld());
 			ServerTickEvents.END_SERVER_TICK.register(server1 -> {
 				timer++;
@@ -134,6 +138,7 @@ public class ExampleMod implements ModInitializer {
 						executed = true;
 						spawnPlayers(server);
 					});
+					kingdom.loadNPCs(fakePlayers);
 				}
 				for (ControlledPlayer fakePlayer : fakePlayers) {
 					fakePlayer.tick();
