@@ -37,13 +37,6 @@ public class ExampleMod implements ModInitializer {
 	private boolean executed = false;
 	private Kingdom kingdom;
 
-//	public static final EntityType<AgentEntity> AGENT_ENTITY = Registry.register(
-//			Registries.ENTITY_TYPE,
-//			new Identifier("mymod", "agent_entity"),
-//			FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, AgentEntity::new)
-//					.dimensions(EntityDimensions.fixed(0.6f, 1.95f))  // Assuming typical player dimensions
-//					.build()
-//	);
 
 	private static int spawnAgent(ServerCommandSource source, String name, ArrayList<ControlledPlayer> list) {
 		GameProfile profile = new GameProfile(UUID.randomUUID(), name);
