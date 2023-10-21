@@ -38,7 +38,7 @@ public class ExampleMod implements ModInitializer {
 	private Kingdom kingdom;
 
 
-	private static int spawnAgent(ServerCommandSource source, String name, ArrayList<ControlledPlayer> list) {
+	private static int spawnAgent(ServerCommandSource source, String name, ArrayList<ControlledPlayer> list, ExampleMod mod) {
 		GameProfile profile = new GameProfile(UUID.randomUUID(), name);
 		gameProfileManager.addProfile(profile);
 		ServerWorld world = source.getWorld();
@@ -56,37 +56,11 @@ public class ExampleMod implements ModInitializer {
 
 
 		ControlledPlayer controlledPlayer = new ControlledPlayer(fakePlayer);
+		mod.kingdom.addCitizen(controlledPlayer);
+
 		LOGGER.info("Created new controlled player");
 		list.add(controlledPlayer);
-		controlledPlayer.performAction();
-		LOGGER.info("Made controlled player perform action");
 		return 1;
-	}
-
-
-
-	private void spawnPlayers(MinecraftServer server) {
-		ServerWorld world = server.getOverworld();
-		server.getPlayerManager().broadcast(Text.literal("Spawn Players function called!"), false);
-		for (GameProfile profile : gameProfileManager.getGameProfiles()) {
-			LOGGER.info("Adding fake player: " + profile.getName());
-			CustomPlayer fakePlayer = CustomPlayer.get(world, profile);
-			fakePlayers.add(new ControlledPlayer(fakePlayer));
-			server.getPlayerManager().loadPlayerData(fakePlayer);
-			PlayerListS2CPacket packet = new PlayerListS2CPacket(PlayerListS2CPacket.Action.ADD_PLAYER, fakePlayer);
-			server.getPlayerManager().sendToAll(packet);
-
-			for (ServerPlayerEntity spe : server.getPlayerManager().getPlayerList()) {
-				LOGGER.info("Player list " + spe.getDisplayName());
-			}
-
-			world.spawnEntity(fakePlayer);
-//			LOGGER.info(fakePlayer.interactionManager.getGameMode().asString());
-
-			server.getPlayerManager().broadcast(Text.literal("Sent PlayerListS2CPacket to all players"), false);
-			server.sendMessage(Text.literal("Sent PlayerListS2CPacket to all players"));
-			LOGGER.info("Sent PlayerListS2CPacket to all players.");
-		}
 	}
 
 	private void setupPlayerSave() {
@@ -100,6 +74,8 @@ public class ExampleMod implements ModInitializer {
 
 		Method finalSavePlayerDataMethod = savePlayerDataMethod;
 		ServerLifecycleEvents.SERVER_STOPPING.register((server) -> {
+			LOGGER.info("Server is stopping, saving Kingdom");
+			kingdom.saveToDisk();
 			LOGGER.info("Server is stopping, saving player data");
 			for (ControlledPlayer fakePlayer: fakePlayers) {
 				CustomPlayer player = fakePlayer.player;
@@ -122,16 +98,15 @@ public class ExampleMod implements ModInitializer {
 
 	private void loadNPCs() {
 		ServerLoginConnectionEvents.INIT.register((ServerLoginNetworkHandler handler, MinecraftServer server) -> {
-			kingdom = new Kingdom(server, server.getOverworld(), "Emerald");
+
 			gameProfileManager =  new GameProfileManager(server, server.getOverworld());
 			ServerTickEvents.END_SERVER_TICK.register(server1 -> {
 				timer++;
 				if (timer > 100 && !executed) { // Adjust this value to increase/decrease delay
 					server.submit(() -> {
 						executed = true;
-						spawnPlayers(server);
+						kingdom = Kingdom.getFromDisk(server, "Emerald", this);
 					});
-					kingdom.loadNPCs(fakePlayers);
 				}
 				for (ControlledPlayer fakePlayer : fakePlayers) {
 					fakePlayer.tick();
@@ -141,6 +116,7 @@ public class ExampleMod implements ModInitializer {
 	}
 
 	public static int setRoleCommand(ServerCommandSource source, String agentName, String roleName, ArrayList<ControlledPlayer> fakePlayers) {
+		LOGGER.info("setRoleCommand called");
 		for (ControlledPlayer fakePlayer : fakePlayers) {
 			if (fakePlayer.getUsername().equals(agentName)) {
 				fakePlayer.setRole(roleName);
@@ -156,7 +132,7 @@ public class ExampleMod implements ModInitializer {
 				.then(CommandManager.literal("newAgent")
 						.then(CommandManager.argument("name", StringArgumentType.string())
 								.executes(context -> {
-									return spawnAgent(context.getSource(), StringArgumentType.getString(context, "name"), this.fakePlayers);
+									return spawnAgent(context.getSource(), StringArgumentType.getString(context, "name"), this.fakePlayers, this);
 								})
 						)
 				)

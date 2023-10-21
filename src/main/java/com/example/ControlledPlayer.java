@@ -1,5 +1,6 @@
 package com.example;
 
+import com.google.gson.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;
@@ -17,29 +18,43 @@ import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 public class ControlledPlayer {
     public CustomPlayer player;
-    private ArrayList<Goal> goals;
-    private Goal currentGoal;
-    private String role;
+    public ArrayList<Goal> goals;
+    public Goal currentGoal;
+    public String role;
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
     private MovementController movementController;
     private CustomMoveControl moveControl;
 
+    public String username;
 
+    public ControlledPlayer() {
+        initVars();
+    }
 
     public ControlledPlayer(CustomPlayer player) {
-        this.player = player;
+        initVars();
+        setPlayer(player);
+    }
+
+    private void initVars() {
         goals = new ArrayList<>();
         role = "";
-        movementController = new MovementController(this, player.getWorld());
-        moveControl = new CustomMoveControl(this);
     }
 
     public CustomMoveControl getMoveControl() {
         return moveControl;
+    }
+
+    public void setPlayer(CustomPlayer player) {
+        this.player = player;
+        username = player.getGameProfile().getName();
+        movementController = new MovementController(this, player.getWorld());
+        moveControl = new CustomMoveControl(this);
     }
 
     public void setRole(String role) {
@@ -119,7 +134,7 @@ public class ControlledPlayer {
     }
 
     public String getUsername() {
-        return player.getGameProfile().getName();
+        return this.username; // player.getGameProfile().getName();
     }
 
     public String getRealName() {
@@ -234,6 +249,29 @@ public class ControlledPlayer {
                 ItemStack mainHandItem = player.getEquippedStack(EquipmentSlot.MAINHAND);
                 LOGGER.info("Item in main hand after equipAxe: " + mainHandItem);
             }
+        }
+    }
+
+    public static class ControlledPlayerSerializer implements JsonSerializer<ControlledPlayer>, JsonDeserializer<ControlledPlayer> {
+        @Override
+        public JsonElement serialize(ControlledPlayer src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject result = new JsonObject();
+            result.add("role", new JsonPrimitive(src.role));
+            result.add("username", new JsonPrimitive(src.getUsername()));
+            return result;
+        }
+        @Override
+        public ControlledPlayer deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+            throws JsonParseException {
+            if (json.isJsonObject()) {
+                JsonObject jsonObject = json.getAsJsonObject();
+                String role = jsonObject.get("role").getAsString();
+                ControlledPlayer controlledPlayer = new ControlledPlayer();
+                controlledPlayer.username = jsonObject.get("username").getAsString();
+                controlledPlayer.setRole(role);
+                return controlledPlayer;
+            }
+            throw new JsonParseException("Invalid ControlledPlayer JSON structure.");
         }
     }
 }
