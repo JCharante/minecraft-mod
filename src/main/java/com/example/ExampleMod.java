@@ -9,13 +9,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.command.CommandManager;
@@ -25,7 +19,6 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,13 +34,13 @@ public class ExampleMod implements ModInitializer {
 
 	public ArrayList<ControlledPlayer> fakePlayers;
 
-	public static final EntityType<AgentEntity> AGENT_ENTITY = Registry.register(
-			Registries.ENTITY_TYPE,
-			new Identifier("mymod", "agent_entity"),
-			FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, AgentEntity::new)
-					.dimensions(EntityDimensions.fixed(0.6f, 1.95f))  // Assuming typical player dimensions
-					.build()
-	);
+//	public static final EntityType<AgentEntity> AGENT_ENTITY = Registry.register(
+//			Registries.ENTITY_TYPE,
+//			new Identifier("mymod", "agent_entity"),
+//			FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, AgentEntity::new)
+//					.dimensions(EntityDimensions.fixed(0.6f, 1.95f))  // Assuming typical player dimensions
+//					.build()
+//	);
 
 	private static int spawnAgent(ServerCommandSource source, String name, ArrayList<ControlledPlayer> list) {
 		GameProfile profile = new GameProfile(UUID.randomUUID(), name);
@@ -149,13 +142,39 @@ public class ExampleMod implements ModInitializer {
 		});
 	}
 
+	public static int setRoleCommand(ServerCommandSource source, String agentName, String roleName, ArrayList<ControlledPlayer> fakePlayers) {
+		for (ControlledPlayer fakePlayer : fakePlayers) {
+			if (fakePlayer.getUsername().equals(agentName)) {
+				fakePlayer.setRole(roleName);
+				return 1;
+			}
+		}
+		LOGGER.info("No usernames match");
+		return 0;
+	}
+
 	private void registerCommands() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(CommandManager.literal("king")
 				.then(CommandManager.literal("newAgent")
 						.then(CommandManager.argument("name", StringArgumentType.string())
 								.executes(context -> {
 									return spawnAgent(context.getSource(), StringArgumentType.getString(context, "name"), this.fakePlayers);
-								})).build()
+								})
+						)
+				)
+				.then(CommandManager.literal("setRole")
+						.then(CommandManager.argument("agentName", StringArgumentType.string())
+								.then(CommandManager.argument("roleName", StringArgumentType.string())
+									.executes(context -> {
+										return setRoleCommand(
+												context.getSource(),
+												StringArgumentType.getString(context, "agentName"),
+												StringArgumentType.getString(context, "roleName"),
+												this.fakePlayers
+										);
+									})
+								)
+						)
 				)
 		));
 	}

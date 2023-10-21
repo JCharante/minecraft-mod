@@ -26,7 +26,7 @@ enum ChopTreeGoalStates {
 public class ChopTreeGoal extends Goal {
     private static final int checkInterval = 10;
     private int timer = 0;
-    private final AgentEntity agent;
+    private final ControlledPlayer agent;
     private BlockPos targetTree = null;
     private BlockPos targetGround = null;
     private boolean movingToTree = false;
@@ -37,7 +37,7 @@ public class ChopTreeGoal extends Goal {
 
     public static ArrayList<BlockPos> blacklist;
 
-    public ChopTreeGoal(AgentEntity agent) {
+    public ChopTreeGoal(ControlledPlayer agent) {
         this.agent = agent;
         if (blacklist == null) {
             blacklist = new ArrayList<>();
@@ -282,8 +282,8 @@ public class ChopTreeGoal extends Goal {
 
     private boolean hasTooMuchWood() {
         // TODO: make this search for wood
-        for (int i = 0; i < this.agent.getInventory().size(); i++) {
-            ItemStack stack = this.agent.getInventory().getStack(i);
+        for (int i = 0; i < this.agent.player.getInventory().size(); i++) {
+            ItemStack stack = this.agent.player.getInventory().getStack(i);
             if (stack.getCount() >= 32) {
                 return true;
             }
@@ -294,8 +294,8 @@ public class ChopTreeGoal extends Goal {
     private int countWood() {
         // TODO: make this search for wood
         int max = 0;
-        for (int i = 0; i < this.agent.getInventory().size(); i++) {
-            ItemStack stack = this.agent.getInventory().getStack(i);
+        for (int i = 0; i < this.agent.player.getInventory().size(); i++) {
+            ItemStack stack = this.agent.player.getInventory().getStack(i);
             max = Math.max(max, stack.getCount());
         }
         return max;

@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class DepositWoodGoal extends Goal {
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
-    private final AgentEntity agent;
+    private final ControlledPlayer agent;
     private final int checkInterval = 20;
     private int timer = 0;
     private boolean movingToChest;
@@ -23,7 +23,7 @@ public class DepositWoodGoal extends Goal {
     private BlockPos targetGround = null;
 
 
-    public DepositWoodGoal(AgentEntity agent) {
+    public DepositWoodGoal(ControlledPlayer agent) {
         this.agent = agent;
     }
 
@@ -77,8 +77,8 @@ public class DepositWoodGoal extends Goal {
 
     private boolean hasTooMuchWood() {
         // TODO: make this search for wood
-        for (int i = 0; i < this.agent.getInventory().size(); i++) {
-            ItemStack stack = this.agent.getInventory().getStack(i);
+        for (int i = 0; i < this.agent.player.getInventory().size(); i++) {
+            ItemStack stack = this.agent.player.getInventory().getStack(i);
             if (stack.getCount() >= 32) {
                 return true;
             }
@@ -112,13 +112,13 @@ public class DepositWoodGoal extends Goal {
 
             //
 
-            InventoryStorage simpleInventoryStorage = InventoryStorage.of(agent.getInventory(), null);
+            InventoryStorage simpleInventoryStorage = InventoryStorage.of(agent.player.getInventory(), null);
             ChestBlockEntity chestBlockEntity = (ChestBlockEntity) agent.getWorld().getBlockEntity(chestPos);
             if (chestBlockEntity == null) return;
             InventoryStorage chestInventoryStorage = InventoryStorage.of(chestBlockEntity, null);
 
-            for (int i = 0; i < agent.getInventory().size(); i++) {
-                ItemStack itemStack = agent.getInventory().getStack(i);
+            for (int i = 0; i < agent.player.getInventory().size(); i++) {
+                ItemStack itemStack = agent.player.getInventory().getStack(i);
                 // If the item stack isn't empty and it's not an axe, try to put it in the chest.
                 if (!itemStack.isEmpty() && !(itemStack.getItem() instanceof AxeItem)) {
                     ItemVariant itemVariant = ItemVariant.of(itemStack);

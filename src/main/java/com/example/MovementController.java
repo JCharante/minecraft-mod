@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 public class MovementController {
-    private final AgentEntity agent;
+    private final ControlledPlayer agent;
     private final World world;
     private List<PathfindingNode> path;
     private int currentIndex;
@@ -17,7 +17,7 @@ public class MovementController {
     private boolean wasNullLastTime = false;
 
 
-    public MovementController(AgentEntity agent, World world) {
+    public MovementController(ControlledPlayer agent, World world) {
         this.agent = agent;
         this.world = world;
         this.pathfindingAdapter = new MinecraftPathfindingAdapter(world);
@@ -81,7 +81,7 @@ public class MovementController {
 
         // LOGGER.info("Using built in navigation");
         // Use the built-in navigation to move to the current target.
-        agent.getNavigation().startMovingTo(currentTarget.getX(), currentTarget.getY(), currentTarget.getZ(), 0.5);
+        agent.getMoveControl().moveTo(currentTarget.getX(), currentTarget.getY(), currentTarget.getZ());
     }
 
     private List<PathfindingNode> findPath(PathfindingNode start, PathfindingNode goal) {
