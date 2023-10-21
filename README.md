@@ -4,6 +4,21 @@ Single player mod for Minecraft to emulate the playable character being a King.
 
 At first the goal is to program all roles, then the rouge-like elements will be added.
 
+## Milestones Reached:
+
+- Reimplementation of FakePlayer class from Fabric
+  - Enables more realistic simulation of the FakePlayer
+- Custom MoveControl for our FakePlayer
+  - Enables movement (FakePlayer does not derive from PathAwareEntity, so requires custom MoveControl)
+- A* Pathing MovementController for FakePlayer
+  - Enables pathing to a specific block with obstacle avoidance with jumping
+- Command to spawn a FakePlayer
+- Command to assign a role to a FakePlayer
+- Reimplementation of Goal system for our FakePlayer
+  - Minecraft has a Goal system for MobEntities, but FakePlayer derives from PlayerEntity
+- Serializing/Deserializing Kingdoms and Citizens (FakePlayer) with world saves
+  - Allows for FakePlayer to have a persistent state
+  - Allows for abstract organization of Kingdoms and Citizens to have a persistent state
 
 ## Roles
 
