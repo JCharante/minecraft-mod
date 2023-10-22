@@ -1,5 +1,9 @@
-package com.example;
+package com.example.npcs;
 
+import com.example.pathfinding.MinecraftPathfindingNode;
+import com.example.npcs.bare.CustomPlayer;
+import com.example.npcs.goals.ChopTreeGoal;
+import com.example.npcs.goals.GetEquipmentGoal;
 import com.google.gson.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

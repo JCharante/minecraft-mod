@@ -1,4 +1,4 @@
-package com.example;
+package com.example.server;
 
 import com.google.gson.*;
 import com.mojang.authlib.GameProfile;

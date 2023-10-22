@@ -1,5 +1,10 @@
-package com.example;
+package com.example.npcs;
 
+import com.example.npcs.ControlledPlayer;
+import com.example.pathfinding.AStarPathfinding;
+import com.example.pathfinding.MinecraftPathfindingAdapter;
+import com.example.pathfinding.MinecraftPathfindingNode;
+import com.example.pathfinding.PathfindingNode;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.slf4j.Logger;

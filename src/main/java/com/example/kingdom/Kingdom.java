@@ -1,5 +1,8 @@
-package com.example;
+package com.example.kingdom;
 
+import com.example.ExampleMod;
+import com.example.npcs.ControlledPlayer;
+import com.example.npcs.bare.CustomPlayer;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.authlib.GameProfile;

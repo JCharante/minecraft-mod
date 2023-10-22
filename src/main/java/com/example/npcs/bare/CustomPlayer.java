@@ -1,4 +1,4 @@
-package com.example;
+package com.example.npcs.bare;
 
 import com.google.common.collect.MapMaker;
 import com.mojang.authlib.GameProfile;
@@ -88,7 +88,7 @@ public class CustomPlayer extends ServerPlayerEntity {
     protected CustomPlayer(ServerWorld world, GameProfile profile) {
         super(world.getServer(), world, profile, SyncedClientOptions.createDefault());
 
-        this.networkHandler = new ControlledPlayerNetworkHandler(this);
+        this.networkHandler = new CustomPlayerNetworkHandler(this);
     }
 //
 //    @Override

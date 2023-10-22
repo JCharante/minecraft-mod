@@ -1,5 +1,6 @@
-package com.example;
+package com.example.npcs.goals;
 
+import com.example.npcs.ControlledPlayer;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ChestBlock;

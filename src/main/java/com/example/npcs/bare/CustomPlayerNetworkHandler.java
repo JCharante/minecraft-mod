@@ -1,4 +1,4 @@
-package com.example;
+package com.example.npcs.bare;
 
 
 import net.minecraft.network.ClientConnection;
@@ -11,10 +11,10 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
-public class ControlledPlayerNetworkHandler extends ServerPlayNetworkHandler {
+public class CustomPlayerNetworkHandler extends ServerPlayNetworkHandler {
     private static final ClientConnection FAKE_CONNECTION = new ControlledClientConnection();
 
-    public ControlledPlayerNetworkHandler(ServerPlayerEntity player) {
+    public CustomPlayerNetworkHandler(ServerPlayerEntity player) {
         super(player.getServer(), FAKE_CONNECTION, player, ConnectedClientData.createDefault(player.getGameProfile()));
     }
 

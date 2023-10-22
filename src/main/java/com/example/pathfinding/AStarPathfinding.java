@@ -1,4 +1,4 @@
-package com.example;
+package com.example.pathfinding;
 
 import net.minecraft.world.World;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.example;
+package com.example.pathfinding;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;

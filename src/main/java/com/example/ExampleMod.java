@@ -1,5 +1,9 @@
 package com.example;
 
+import com.example.kingdom.Kingdom;
+import com.example.npcs.ControlledPlayer;
+import com.example.npcs.bare.CustomPlayer;
+import com.example.server.GameProfileManager;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
