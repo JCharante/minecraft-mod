@@ -12,6 +12,7 @@ At first the goal is to program all roles, then the rouge-like elements will be 
   - Enables movement (FakePlayer does not derive from PathAwareEntity, so requires custom MoveControl)
 - A* Pathing MovementController for FakePlayer
   - Enables pathing to a specific block with obstacle avoidance with jumping
+  - If you want to use this in your own project, look at [MovementController.java](src/main/java/com/example/npcs/MovementController.java)
 - Command to spawn a FakePlayer
 - Command to assign a role to a FakePlayer
 - Reimplementation of Goal system for our FakePlayer
