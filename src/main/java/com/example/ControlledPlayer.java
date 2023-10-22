@@ -50,6 +50,10 @@ public class ControlledPlayer {
         return moveControl;
     }
 
+    public MovementController getMovementController() {
+        return movementController;
+    }
+
     public void setPlayer(CustomPlayer player) {
         this.player = player;
         username = player.getGameProfile().getName();
@@ -67,7 +71,6 @@ public class ControlledPlayer {
         goals.clear();
         if (role.equals("lumberjack")) {
             goals.add(new GetEquipmentGoal(this));
-            goals.add(new DepositWoodGoal(this));
             goals.add(new ChopTreeGoal(this));
         }
     }
@@ -106,6 +109,7 @@ public class ControlledPlayer {
     }
 
     public BlockPos findChest() {
+        // TODO: cache this value
         BlockPos currentPosition = player.getBlockPos();
         int searchRadius = 100;
 
@@ -158,6 +162,7 @@ public class ControlledPlayer {
     }
 
     public void sayInChat(String message) {
+        if (player == null) return;
         if (!player.getWorld().isClient) {
             MinecraftServer server = player.getWorld().getServer();
             if (server != null) {

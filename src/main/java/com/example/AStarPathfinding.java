@@ -15,7 +15,7 @@ public class AStarPathfinding {
     public static final Logger LOGGER = LoggerFactory.getLogger("mymod");
 
     public AStarPathfinding(World world, PathfindingNode start, PathfindingNode goal) {
-        LOGGER.info("AStarPathfinding::constructor");
+//        LOGGER.info("AStarPathfinding::constructor");
         this.world = world;
         this.start = start;
         this.goal = goal;
@@ -23,7 +23,7 @@ public class AStarPathfinding {
 
 
     public List<PathfindingNode> findPath() {
-        LOGGER.info("AStarPathfinding::findPath called");
+//        LOGGER.info("AStarPathfinding::findPath called");
         List<NodeRecord> openList = new ArrayList<>();
         List<NodeRecord> closedList = new ArrayList<>();
 
@@ -44,7 +44,7 @@ public class AStarPathfinding {
             if (iterations > 10000) return path;
 
             if (current.getNode().equals(goal)) {
-                LOGGER.info("AStarPathfinding::findPath found goal");
+//                LOGGER.info("AStarPathfinding::findPath found goal");
                 break; // Found the goal
             }
 
@@ -85,7 +85,7 @@ public class AStarPathfinding {
             current = current.getConnection();
         }
 
-        LOGGER.info("AStarPathfinding::findPath returning path");
+//        LOGGER.info("AStarPathfinding::findPath returning path");
         return path;
     }
 

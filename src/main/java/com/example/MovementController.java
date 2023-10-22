@@ -29,7 +29,7 @@ public class MovementController {
     }
 
     public boolean moveTo(BlockPos goal) {
-        LOGGER.info("MovementController::moveTo called for " + goal.toShortString());
+//        LOGGER.info("MovementController::moveTo called for " + goal.toShortString());
         MinecraftPathfindingNode startNode = pathfindingAdapter.getNodeAt(agent.getBlockPos().down());
         MinecraftPathfindingNode goalNode = pathfindingAdapter.getNodeAt(goal);
         if (!startNode.notStrictCanStandOn()) {
@@ -48,8 +48,12 @@ public class MovementController {
         // Start at the beginning of the path.
         currentIndex = 0;
 
-        LOGGER.info("MovementController::moveTo finished");
+//        LOGGER.info("MovementController::moveTo finished");
         return true;
+    }
+
+    public boolean isIdle() {
+          return path == null || currentIndex >= path.size();
     }
 
     public void tick() {
@@ -85,12 +89,12 @@ public class MovementController {
     }
 
     private List<PathfindingNode> findPath(PathfindingNode start, PathfindingNode goal) {
-        LOGGER.info("MovementController::findPath called");
-        LOGGER.info("MovementController::findPath start " + start.toString());
-        LOGGER.info("MovementController::findPath goal " + goal.toString());
+//        LOGGER.info("MovementController::findPath called");
+//        LOGGER.info("MovementController::findPath start " + start.toString());
+//        LOGGER.info("MovementController::findPath goal " + goal.toString());
         AStarPathfinding pathfinding = new AStarPathfinding(world, start, goal);
         List<PathfindingNode> path = pathfinding.findPath();
-        LOGGER.info("MovementController::findPath found path" + path.size() + " nodes");
+//        LOGGER.info("MovementController::findPath found path" + path.size() + " nodes");
         return path;
     }
 }

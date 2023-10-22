@@ -20,6 +20,16 @@ At first the goal is to program all roles, then the rouge-like elements will be 
   - Allows for FakePlayer to have a persistent state
   - Allows for abstract organization of Kingdoms and Citizens to have a persistent state
 
+
+## NPC Goal Mechanics
+
+- Each NPC has a role
+- Depending on the role, Goals are assigned to the NPC in order of priority
+- Each Goal is a state machine
+- Every tick, the Goal's state machine returns a new state, and then we tick that state.
+- This allows for different stages of a Goal to be separated but still tightly bound within a Goal.
+
+
 ## Roles
 
 - [x] Lumberjack
