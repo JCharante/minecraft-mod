@@ -1,6 +1,7 @@
 package com.example.npcs.bare;
 
 
+import com.example.util.LogManager;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.NetworkSide;
 import net.minecraft.network.PacketCallbacks;
@@ -19,7 +20,14 @@ public class CustomPlayerNetworkHandler extends ServerPlayNetworkHandler {
     }
 
     @Override
-    public void send(Packet<?> packet, @Nullable PacketCallbacks callbacks) { }
+    public void send(Packet<?> packet, @Nullable PacketCallbacks callbacks) {
+        super.send(packet, callbacks);
+        LogManager.info("CustomPlayerNetworkHandler-send", packet.toString());
+    }
+
+    public void tickClientConnection() {
+        FAKE_CONNECTION.tick();
+    }
 
     private static final class ControlledClientConnection extends ClientConnection {
         private ControlledClientConnection() {
@@ -28,6 +36,7 @@ public class CustomPlayerNetworkHandler extends ServerPlayNetworkHandler {
 
         @Override
         public void setPacketListener(PacketListener packetListener) {
+            // super.setPacketListener(packetListener);
         }
     }
 }

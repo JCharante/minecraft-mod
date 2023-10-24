@@ -1,10 +1,10 @@
 package com.example.npcs;
 
-import com.example.npcs.ControlledPlayer;
 import com.example.pathfinding.AStarPathfinding;
 import com.example.pathfinding.MinecraftPathfindingAdapter;
 import com.example.pathfinding.MinecraftPathfindingNode;
 import com.example.pathfinding.PathfindingNode;
+import com.example.util.LogManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
@@ -34,26 +34,26 @@ public class MovementController {
     }
 
     public boolean moveTo(BlockPos goal) {
-//        LOGGER.info("MovementController::moveTo called for " + goal.toShortString());
+        LogManager.info("MovementController-moveTo", "called for " + goal.toShortString());
         MinecraftPathfindingNode startNode = pathfindingAdapter.getNodeAt(agent.getBlockPos().down());
         MinecraftPathfindingNode goalNode = pathfindingAdapter.getNodeAt(goal);
         if (!startNode.notStrictCanStandOn()) {
-            LOGGER.info("MovementController::moveTo start node is not standable (strict=false)");
+            LogManager.info("MovementController-moveTo", "start node is not standable (strict=false)");
             return false;
         }
         if (!goalNode.notStrictCanStandOn()) {
-            LOGGER.info("MovementController::moveTo goal node is not standable (strict=false)");
+            LogManager.info("MovementController-moveTo", "goal node is not standable (strict=false)");
             return false;
         }
         this.path = findPath(startNode, goalNode);
         if (path == null || path.size() == 0) {
-            LOGGER.info("No path found!!");
+            LogManager.info("MovementController-moveTo", "No path found!!");
             return false;
         }
         // Start at the beginning of the path.
         currentIndex = 0;
 
-//        LOGGER.info("MovementController::moveTo finished");
+        LogManager.info("MovementController-moveTo", "reached end of moveTo, path found");
         return true;
     }
 
@@ -62,16 +62,16 @@ public class MovementController {
     }
 
     public void tick() {
+        LogManager.info("MovementController-tick", "tick called");
         if (path == null || currentIndex >= path.size()) {
             if (!wasNullLastTime) {
-                LOGGER.info("MovementController::tick path is null or path complete");
+                LogManager.info("MovementController-tick", "path is null or path complete");
                 wasNullLastTime = true;
             }
             return;
         }
 
         wasNullLastTime = false;
-        //LOGGER.info("MovementController::tick");
 
         PathfindingNode currentNode = path.get(currentIndex);
         BlockPos currentTarget = pathfindingAdapter.getNodeAt(currentNode).getBlockPos();

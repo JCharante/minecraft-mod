@@ -127,7 +127,17 @@ get assigned a role depending on this order
 - Cook
 - Farmer
 - Blacksmith
-- 
+
+
+## Tools
+
+### Log Viewer
+
+I'm using this to view Minecraft logs https://github.com/sevdokimov/log-viewer
+
+### Goal State Docs
+
+Finite State Machine Diagram made with https://asciiflow.com/#/
 
 
 ## Disclaimer

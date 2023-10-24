@@ -1,7 +1,7 @@
 package com.example.npcs;
 
 
-import com.example.npcs.ControlledPlayer;
+import com.example.util.LogManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.DoorBlock;
@@ -35,7 +35,7 @@ public class CustomMoveControl {
         if (!hasTarget) {
             return;
         }
-
+        LogManager.info("CustomMoveControl-tick", " has target true");
         double speedMultiplier= 0.5; // Velocity modifier (you might want to adjust this)
         double distanceX = nextX - agent.player.getX();
         double distanceY = nextY - agent.player.getY();
@@ -47,13 +47,17 @@ public class CustomMoveControl {
         Vec3d nextPos = new Vec3d( nextX, nextY, nextZ);
 
         if (shouldJumpToNextNode(currentPos, nextPos)) {
+            LogManager.info("CustomMoveControl-tick", "shouldJumpToNextNode true");
             agent.player.jump();
         }
 
         Vec3d newVel = new Vec3d(distanceX, distanceY, distanceZ).multiply(speedMultiplier / distance);
+        LogManager.info("CustomMoveControl-tick", "set velocity " + newVel.toVector3f().toString());
         agent.player.setVelocity(newVel);
 
-        if (agent.getBlockPos().isWithinDistance(new BlockPos((int) nextX, (int) nextY, (int) nextZ),  1.5)) { // Close enough to target
+        if (agent.getBlockPos().isWithinDistance(new BlockPos((int) nextX, (int) nextY, (int) nextZ),  1.5)) {
+            // Close enough to target
+            LogManager.info("CustomMoveControl-tick", "reached target true");
             this.hasTarget = false; // Reached the mark
         }
     }

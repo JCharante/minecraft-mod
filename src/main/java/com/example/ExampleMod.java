@@ -4,6 +4,7 @@ import com.example.kingdom.Kingdom;
 import com.example.npcs.ControlledPlayer;
 import com.example.npcs.bare.CustomPlayer;
 import com.example.server.GameProfileManager;
+import com.example.util.LogManager;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.api.ModInitializer;
@@ -132,29 +133,48 @@ public class ExampleMod implements ModInitializer {
 	}
 
 	private void registerCommands() {
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(CommandManager.literal("king")
-				.then(CommandManager.literal("newAgent")
-						.then(CommandManager.argument("name", StringArgumentType.string())
-								.executes(context -> {
-									return spawnAgent(context.getSource(), StringArgumentType.getString(context, "name"), this.fakePlayers, this);
-								})
-						)
-				)
-				.then(CommandManager.literal("setRole")
-						.then(CommandManager.argument("agentName", StringArgumentType.string())
-								.then(CommandManager.argument("roleName", StringArgumentType.string())
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->  {
+				dispatcher.register(CommandManager.literal("king")
+					.then(CommandManager.literal("newAgent")
+							.then(CommandManager.argument("name", StringArgumentType.string())
 									.executes(context -> {
-										return setRoleCommand(
-												context.getSource(),
-												StringArgumentType.getString(context, "agentName"),
-												StringArgumentType.getString(context, "roleName"),
-												this.fakePlayers
-										);
+										return spawnAgent(context.getSource(), StringArgumentType.getString(context, "name"), this.fakePlayers, this);
 									})
-								)
-						)
-				)
-		));
+							)
+					)
+					.then(CommandManager.literal("setRole")
+							.then(CommandManager.argument("agentName", StringArgumentType.string())
+									.then(CommandManager.argument("roleName", StringArgumentType.string())
+										.executes(context -> {
+											return setRoleCommand(
+													context.getSource(),
+													StringArgumentType.getString(context, "agentName"),
+													StringArgumentType.getString(context, "roleName"),
+													this.fakePlayers
+											);
+										})
+									)
+							)
+					)
+				);
+				dispatcher.register(CommandManager.literal("logon")
+						.then(CommandManager.argument("LOGGERID", StringArgumentType.string())
+								.executes(context -> {
+									String loggerID = StringArgumentType.getString(context, "LOGGERID");
+									LogManager.logOn(loggerID);
+									return 1; // Success code for command
+								})));
+
+				dispatcher.register(CommandManager.literal("logoff")
+						.then(CommandManager.argument("LOGGERID", StringArgumentType.string())
+								.executes(context -> {
+									String loggerID = StringArgumentType.getString(context, "LOGGERID");
+									LogManager.logOff(loggerID);
+									return 1; // Success code for command
+								})));
+
+			}
+		);
 	}
 
 
@@ -166,6 +186,7 @@ public class ExampleMod implements ModInitializer {
 		loadNPCs();
 
 		registerCommands();
+
 
 		LOGGER.info("Hello Fabric world!");
 	}

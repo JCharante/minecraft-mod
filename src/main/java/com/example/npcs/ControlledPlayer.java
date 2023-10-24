@@ -1,9 +1,11 @@
 package com.example.npcs;
 
-import com.example.pathfinding.MinecraftPathfindingNode;
 import com.example.npcs.bare.CustomPlayer;
+import com.example.npcs.bare.CustomPlayerNetworkHandler;
 import com.example.npcs.goals.ChopTreeGoal;
 import com.example.npcs.goals.GetEquipmentGoal;
+import com.example.pathfinding.MinecraftPathfindingNode;
+import com.example.util.LogManager;
 import com.google.gson.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -103,6 +105,10 @@ public class ControlledPlayer {
         player.playerTick();
         movementController.tick();
         moveControl.tick();
+        player.networkHandler.tick();
+        if (player.networkHandler instanceof CustomPlayerNetworkHandler) {
+            ((CustomPlayerNetworkHandler) player.networkHandler).tickClientConnection();
+        }
     }
 
     public void performAction() {
@@ -191,14 +197,15 @@ public class ControlledPlayer {
     }
 
     public boolean navTo(BlockPos targetBlockPos, boolean tpIfFail) {
-        LOGGER.info("Agent navTo " + targetBlockPos);
         if (targetBlockPos == null) {
-            LOGGER.info("You tried to make me navTo null!");
+            LogManager.info("ControlledPlayer-navTo", "You tried to make me navTo null!");
             return false;
         };
-        LOGGER.info("Agent navTo " + targetBlockPos);
+        LOGGER.info("Agent navTo " + targetBlockPos.toShortString());
         boolean possible = movementController.moveTo(targetBlockPos);
+        LogManager.info("ControlledPlayer-navTo", "Agent navTo " + targetBlockPos.toShortString() + " possible: " + possible);
         if (possible || !tpIfFail) return possible;
+        LogManager.info("ControlledPlayer-navTo", "tpIfFail is true, teleporting to chest");
         BlockPos chest = this.findChest();
         if (chest == null) return false;
         BlockPos ground = this.findStandableNearChest(chest);
@@ -236,6 +243,17 @@ public class ControlledPlayer {
             BlockPos fartherPosition = startingPosition.offset(direction, 2); // Going two blocks in each direction
             if (MinecraftPathfindingNode.canStandOn(this.getWorld(), fartherPosition)) {
                 return fartherPosition;
+            }
+        }
+
+        return null; // Return null if no suitable position is found
+    }
+
+    public BlockPos findStandableNearby(BlockPos target) {
+        // Loop over a small area around the entity to check for chests
+        for (BlockPos pos : BlockPos.iterateOutwards(target, 4, 8, 4)) {
+            if (MinecraftPathfindingNode.canStandOn(this.getWorld(), pos)) {
+                return pos;
             }
         }
 
